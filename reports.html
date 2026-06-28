@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raymond Gate Pass Filters & Reports</title>
+    <style>
+        :root {
+            --raymond-red: #B30006;
+            --raymond-dark-red: #800004;
+            --charcoal: #111111; 
+            --light-bg: #F8F9FA;
+            --text-main: #333333; 
+            --border-color: #E2E8F0; 
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --transition: all 0.2s ease;
+            --success-bg: #D1FAE5;
+            --warning-bg: #FEF3C7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            background-image: linear-gradient(135deg, #fbfbfb 0%, #f3f4f6 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--raymond-red) 0%, var(--raymond-dark-red) 100%);
+            padding: 15px 24px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+        }
+
+        .header-brand {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .header-sub {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #E2E8F0;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        main {
+            flex: 1;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px; 
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .dashboard-card {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 16px 20px; 
+            position: relative;
+        }
+
+        .half-width-card {
+            max-width: 700px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 14px 20px; 
+        }
+
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(to right, var(--raymond-red), var(--raymond-dark-red));
+        }
+
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: #f8fafc;
+            padding: 12px 16px; 
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 2px;
+            align-items: flex-end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px; 
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .filter-group label {
+            font-size: 0.7rem; 
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+        }
+
+        .filter-control {
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            background-color: #ffffff;
+            font-size: 0.85rem;
+            width: 100%;
+            height: 36px;
+            outline: none;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex: 1.3;
+            min-width: 200px;
+        }
+
+        .btn-search {
+            height: 36px;
+            padding: 0 14px;
+            background-color: var(--raymond-red);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            flex: 2;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(179, 0, 6, 0.15);
+        }
+
+        .btn-clear {
+            height: 36px;
+            padding: 0 12px;
+            background-color: #64748b;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            flex: 1;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        .btn-clear:hover {
+            background-color: var(--charcoal);
+        }
+
+        .visual-doughnut-chart {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 25px;
+            padding: 5px 0;
+            margin: 0 auto;
+        }
+
+        .doughnut-wrapper {
+            position: relative;
+            width: 75px;
+            height: 75px;
+            flex-shrink: 0;
+        }
+
+        .doughnut-inner-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .doughnut-inner-text .total-num {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--charcoal);
+            line-height: 1;
+        }
+
+        .doughnut-inner-text .total-label {
+            font-size: 0.45rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+            margin-top: 1px;
+        }
+
+        .chart-legend-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 4px 16px; 
+            text-align: left;
+            flex: 1;
+            min-width: 260px;
+        }
+
+        .legend-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #475569;
+            white-space: nowrap;
+        }
+
+        .legend-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+         }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background-color: #F1F5F9;
+            color: #475569;
+            font-weight: 700;
+            padding: 12px 16px;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: #334155;
+            vertical-align: middle;
+        }
+        
+        .status-pill {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-align: center;
+            min-width: 95px;
+        }
+
+        .status-approved { background-color: var(--success-bg); color: #065F46; }
+        .status-pending { background-color: var(--warning-bg); color: #92400E; }
+
+        .pass-badge {
+            font-family: monospace;
+            background-color: #EFF6FF;
+            color: #1E40AF;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 6px; 
+            font-size: 0.95rem;
+            color: #64748B;
+            font-weight: 600;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #ffffff;
+            font-size: 0.85rem;
+            color: #64748B;
+            border-top: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    
+    <header>
+        <div>
+            <div class="header-brand">Raymond Reports</div>
+            <div class="header-sub">Lifestyle Limited • Textile Division • Pandhurna</div>
+        </div>
+    </header>
+
+    <main>
+        <div class="dashboard-card">
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>Search Employee ID</label>
+                    <input type="text" id="empIdFilter" class="filter-control" placeholder="Enter ID...">
+                </div>
+                <div class="filter-group">
+                    <label>Date Horizon</label>
+                    <select id="dateRangeFilter" class="filter-control" onchange="handleHorizonChange()">
+                        <option value="all">All Available History</option>
+                        <option value="7">Last 7 Days</option>
+                        <option value="15">Last 15 Days</option>
+                        <option value="30">Last 1 Month</option>
+                        <option value="custom" selected>Custom Date Range</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>From Date</label>
+                    <input type="date" id="fromDate" class="filter-control" onchange="handleCustomDateInput()">
+                </div>
+                <div class="filter-group">
+                    <label>To Date</label>
+                    <input type="date" id="toDate" class="filter-control" onchange="handleCustomDateInput()">
+                </div>
+                
+                <div class="filter-group">
+                    <label>Department</label>
+                    <select id="deptFilter" class="filter-control">
+                        <option value="all">All Departments</option>                        
+                        <option value="PV spinning">PV spinning</option>
+                        <option value="Worsted spinning">Worsted spinning</option>
+                        <option value="Weaving">Weaving</option>
+                        <option value="finishing">Finishing</option>
+                        <option value="Warehouse">Warehouse</option>
+                        <option value="Folding">Folding</option>
+                        <option value="quality-assurance">Quality Assurance (QA)</option>
+                        <option value="hr-admin">HR & Administration</option>
+                        <option value="it-support">IT Support</option>
+                        <option value="Account & Commercial">Account & Commercial</option>
+                    </select>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-search" onclick="applyFilters()">Search Records</button>
+                    <button class="btn-clear" onclick="resetAllFilters()">Reset</button>
+                </div>
+            </div>
+            <div id="statusMessage" class="status-message">Connecting data sync engine...</div>
+        </div>
+
+        <div class="dashboard-card half-width-card">
+            <div style="margin-bottom:10px;"><h2>Department Wise Summary Metrics</h2></div>
+            <div id="chartContainer" class="visual-doughnut-chart">
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="margin-bottom:15px;"><h2>Detailed Query Logs</h2></div>
+            <div class="table-responsive">
+                <table id="recordsTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>S.No.</th>
+                            <th>Pass No</th>
+                            <th>User ID</th>
+                            <th>User Name</th>
+                            <th>Department</th>
+                            <th>Duration</th>
+                            <th>Approver</th>
+                            <th>Remark / Purpose</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>© 2026 Built by Prashant Dadhe</p>
+    </footer>
+
+    <script>
+        const AIRTABLE_TOKEN = "patq62D15sHh5zGal.f50b76b3f1e5452afe66944d7eb7206a82f7621e6b3fb549d38b53640ed48169";
+        const AIRTABLE_BASE_ID = "appSwFVqupYGAs0MW";
+        const AIRTABLE_TABLE_ID = "tblfwpX28UHJumOrM"; 
+
+        let allRecords = [];
+
+        const currentIso = new Date().toISOString();
+        const pastDayIso = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+        const localBackupDataset = [
+            { createdTime: currentIso, fields: { PassNo: "P-9001", UserID: "RAY101", UserName: "Rajesh Kumar", Department: "PV spinning", Duration: "2 hrs", Approver: "N. K. Sharma", Remark: "Plant Visit", Status: "Approved" } },
+            { createdTime: currentIso, fields: { PassNo: "P-9002", UserID: "RAY102", UserName: "Amit Sharma", Department: "Worsted spinning", Duration: "1 hr", Approver: "V. Upadhyay", Remark: "Personal", Status: "Pending" } },
+            { createdTime: pastDayIso, fields: { PassNo: "P-9003", UserID: "RAY103", UserName: "Vijay Singh", Department: "Weaving", Duration: "3 hrs", Approver: "A. K. Shukla", Remark: "Yarn Check", Status: "Approved" } },
+            { createdTime: pastDayIso, fields: { PassNo: "P-9004", UserID: "RAY104", UserName: "Sanjay Dutt", Department: "Finishing", Duration: "4 hrs", Approver: "R. Choudhary", Remark: "Machine Repair", Status: "Approved" } },
+            { createdTime: pastDayIso, fields: { PassNo: "P-9005", UserID: "RAY105", UserName: "Anil Kapoor", Department: "Warehouse", Duration: "2 hrs", Approver: "S. Deshmukh", Remark: "Stock Audit", Status: "Pending" } },
+            { createdTime: currentIso, fields: { PassNo: "P-9006", UserID: "RAY106", UserName: "Sunil Shetty", Department: "IT Support", Duration: "1 hr", Approver: "P. Dadhe", Remark: "Network Issue", Status: "Approved" } },
+            { createdTime: currentIso, fields: { PassNo: "P-9007", UserID: "RAY107", UserName: "Manoj Tiwari", Department: "Quality Assurance (QA)", Duration: "2 hrs", Approver: "K. Prasad", Remark: "Lab Check", Status: "Approved" } },
+            { createdTime: pastDayIso, fields: { PassNo: "P-9008", UserID: "RAY108", UserName: "Deepak Rao", Department: "HR & Administration", Duration: "5 hrs", Approver: "S. K. Mishra", Remark: "Audit duty", Status: "Approved" } },
+            { createdTime: currentIso, fields: { PassNo: "P-9009", UserID: "RAY109", UserName: "Harish Rawat", Department: "Folding", Duration: "3 hrs", Approver: "M. P. Patil", Remark: "Packing Check", Status: "Approved" } }
+        ];
+
+        function getTodayString() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        async function fetchInitialData() {
+            const statusMessage = document.getElementById('statusMessage');
+            let url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}`;
+
+            const todayStr = getTodayString();
+            document.getElementById('fromDate').value = todayStr;
+            document.getElementById('toDate').value = todayStr;
+
+            try {
+                let response = await fetch(url, {
+                    method: "GET",
+                    headers: { "Authorization": `Bearer ${AIRTABLE_TOKEN}` }
+                });
+
+                if (!response.ok) throw new Error("API Connection Failed");
+
+                const data = await response.json();
+                allRecords = data.records || [];
+                statusMessage.innerText = "Live Database Synced successfully!";
+                applyFilters();
+
+            } catch (error) {
+                console.warn("Using local fallback snapshot layer.", error);
+                allRecords = localBackupDataset;
+                statusMessage.innerText = "Running via local backup data profiles.";
+                applyFilters();
+            }
+        }
+
+        function handleHorizonChange() {
+            const horizon = document.getElementById('dateRangeFilter').value;
+            if (horizon !== 'custom') {
+                document.getElementById('fromDate').value = "";
+                document.getElementById('toDate').value = "";
+            }
+        }
+
+        function handleCustomDateInput() {
+            document.getElementById('dateRangeFilter').value = 'custom';
+        }
+
+        function renderBars(counts) {
+            const chartContainer = document.getElementById('chartContainer');
+            chartContainer.innerHTML = "";
+
+            const deptOptions = document.getElementById('deptFilter').options;
+            // ADDED: Added an extra distinct hexadecimal color option ('#652438') to support the new 10th department entry tracking gracefully
+            const colorPalette = ['#B30006', '#E53E3E', '#DD6B20', '#ECC94B', '#319795', '#3182CE', '#007791', '#4A5568', '#718096', '#652438'];
+            
+            let structuredData = [];
+            let totalPassesCount = 0;
+            let colorMapIndex = 0;
+
+            for (let i = 0; i < deptOptions.length; i++) {
+                const optValue = deptOptions[i].value;
+                const optText = deptOptions[i].text;
+                if (optValue === 'all') continue;
+
+                const valuesCount = counts[optValue] || 0;
+                totalPassesCount += valuesCount;
+
+                structuredData.push({
+                    key: optValue,
+                    label: optText,
+                    value: valuesCount,
+                    color: colorPalette[colorMapIndex % colorPalette.length]
+                });
+                colorMapIndex++;
+            }
+
+            const doughnutWrapper = document.createElement('div');
+            doughnutWrapper.className = 'doughnut-wrapper';
+
+            const legendContainer = document.createElement('div');
+            legendContainer.className = 'chart-legend-container';
+
+            const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svgElement.setAttribute("width", "75");
+            svgElement.setAttribute("height", "75");
+            svgElement.setAttribute("viewBox", "0 0 80 80");
+            svgElement.style.transform = "rotate(-90deg)";
+
+            const baseCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            baseCircle.setAttribute("cx", "40");
+            baseCircle.setAttribute("cy", "40");
+            baseCircle.setAttribute("r", "32");
+            baseCircle.setAttribute("fill", "transparent");
+            baseCircle.setAttribute("stroke", "#f1f5f9");
+            baseCircle.setAttribute("stroke-width", "8");
+            svgElement.appendChild(baseCircle);
+
+            const ringCircumference = 2 * Math.PI * 32; 
+            let segmentOffsetAccumulator = 0;
+
+            structuredData.forEach(item => {
+                const legendRow = document.createElement('div');
+                legendRow.className = 'legend-row';
+                legendRow.innerHTML = `
+                    <div class="legend-indicator" style="background-color: ${item.color};"></div>
+                    <div>${item.label}: <strong>${item.value}</strong></div>
+                `;
+                legendContainer.appendChild(legendRow);
+
+                if (totalPassesCount === 0 || item.value === 0) return;
+
+                const partialRatio = item.value / totalPassesCount;
+                const strokeSegmentLength = ringCircumference * partialRatio;
+                const dashArrayString = `${strokeSegmentLength} ${ringCircumference - strokeSegmentLength}`;
+
+                const activeCircleSlice = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                activeCircleSlice.setAttribute("cx", "40");
+                activeCircleSlice.setAttribute("cy", "40");
+                activeCircleSlice.setAttribute("r", "32");
+                activeCircleSlice.setAttribute("fill", "transparent");
+                activeCircleSlice.setAttribute("stroke", item.color);
+                activeCircleSlice.setAttribute("stroke-width", "8");
+                activeCircleSlice.setAttribute("stroke-dasharray", dashArrayString);
+                activeCircleSlice.setAttribute("stroke-dashoffset", (-segmentOffsetAccumulator).toString());
+                activeCircleSlice.style.transition = "stroke-dashoffset 0.4s ease";
+
+                svgElement.appendChild(activeCircleSlice);
+                segmentOffsetAccumulator += strokeSegmentLength;
+            });
+
+            doughnutWrapper.appendChild(svgElement);
+            doughnutWrapper.innerHTML += `
+                <div class="doughnut-inner-text">
+                    <div class="total-num">${totalPassesCount}</div>
+                    <div class="total-label">Passes</div>
+                </div>
+            `;
+
+            chartContainer.appendChild(doughnutWrapper);
+            chartContainer.appendChild(legendContainer);
+        }
+
+        function applyFilters() {
+            const empIdValue = document.getElementById('empIdFilter').value.trim().toLowerCase();
+            const dateRangeValue = document.getElementById('dateRangeFilter').value;
+            const fromDateVal = document.getElementById('fromDate').value;
+            const toDateVal = document.getElementById('toDate').value;
+            const deptFilterSelect = document.getElementById('deptFilter');
+            const deptValue = deptFilterSelect.value;
+            
+            const tableElement = document.getElementById('recordsTable');
+            const tableBody = document.getElementById('tableBody');
+            const statusMessage = document.getElementById('statusMessage');
+
+            const deptOptionsMap = [];
+            for (let i = 0; i < deptFilterSelect.options.length; i++) {
+                if (deptFilterSelect.options[i].value !== 'all') {
+                    deptOptionsMap.push({
+                        value: deptFilterSelect.options[i].value.toLowerCase(),
+                        text: deptFilterSelect.options[i].text.toLowerCase(),
+                        rawKey: deptFilterSelect.options[i].value
+                    });
+                }
+            }
+
+            let filtered = allRecords.filter(record => {
+                const fields = record.fields;
+                if (!fields) return false;
+                
+                if (empIdValue) {
+                    const uid = fields.UserID !== undefined ? String(fields.UserID).trim().toLowerCase() : "";
+                    if (!uid.includes(empIdValue)) return false;
+                }
+
+                if (deptValue !== 'all') {
+                    const dpt = fields.Department ? String(fields.Department).trim().toLowerCase() : "";
+                    const targetOption = deptOptionsMap.find(o => o.rawKey === deptValue);
+                    if (targetOption) {
+                        if (dpt !== targetOption.value && dpt !== targetOption.text) return false;
+                    }
+                }
+
+                const timeStamp = record.createdTime;
+                if (dateRangeValue !== 'all' && timeStamp) {
+                    const recordDate = new Date(timeStamp);
+                    recordDate.setHours(0,0,0,0);
+
+                    if (dateRangeValue === 'custom') {
+                        if (fromDateVal) {
+                            const start = new Date(fromDateVal); start.setHours(0,0,0,0);
+                            if (recordDate < start) return false;
+                        }
+                        if (toDateVal) {
+                            const end = new Date(toDateVal); end.setHours(0,0,0,0);
+                            if (recordDate > end) return false;
+                        }
+                    } else {
+                        const days = parseInt(dateRangeValue);
+                        const today = new Date(); today.setHours(0,0,0,0);
+                        const diff = Math.ceil(Math.abs(today - recordDate) / (1000 * 60 * 60 * 24));
+                        if (diff > days) return false;
+                    }
+                }
+                return true;
+            });
+
+            let chartCounts = {};
+            deptOptionsMap.forEach(opt => {
+                chartCounts[opt.rawKey] = 0;
+            });
+
+            tableBody.innerHTML = "";
+
+            if (filtered.length === 0) {
+                tableElement.style.display = "none";
+                renderBars(chartCounts);
+                statusMessage.innerText = "No matching records found.";
+                statusMessage.style.display = "block";
+                return;
+            }
+
+            filtered.forEach((record, index) => {
+                const fields = record.fields;
+                const d = fields.Department ? String(fields.Department).trim().toLowerCase() : "";
+                
+                if (d) {
+                    let matchedOpt = deptOptionsMap.find(o => o.value === d || o.text === d);
+                    if (matchedOpt) {
+                        chartCounts[matchedOpt.rawKey]++;
+                    }
+                }
+
+                const tr = document.createElement('tr');
+                const isApproved = String(fields.Status).toLowerCase() === 'approved';
+                
+                tr.innerHTML = `
+                    <td style="font-weight:600; color:#64748B;">${filtered.length - index}</td>
+                    <td><span class="pass-badge">${fields.PassNo || '—'}</span></td>
+                    <td style="font-weight:700;">${fields.UserID || '—'}</td>
+                    <td style="font-weight:600;">${fields.UserName || '—'}</td>
+                    <td>${fields.Department || '—'}</td>
+                    <td>${fields.Duration || '—'}</td>
+                    <td style="color:#475569; font-weight:500;">${fields.Approver || '—'}</td>
+                    <td>${fields.Remark || '—'}</td>
+                    <td><span class="status-pill ${isApproved ? 'status-approved' : 'status-pending'}">${fields.Status || 'Pending'}</span></td>
+                `;
+                tableBody.appendChild(tr);
+            });
+
+            statusMessage.style.display = "none";
+            tableElement.style.display = "table";
+            renderBars(chartCounts);
+        }
+
+        function resetAllFilters() {
+            document.getElementById('empIdFilter').value = "";
+            document.getElementById('dateRangeFilter').value = "all";
+            document.getElementById('fromDate').value = "";
+            document.getElementById('toDate').value = "";
+            document.getElementById('deptFilter').value = "all";
+            applyFilters();
+        }
+
+        window.addEventListener('DOMContentLoaded', fetchInitialData);
+    </script>
+</body>
+</html>
