@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Raymond Gate Pass Filters & Reports</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
             --raymond-red: #B30006;
@@ -39,7 +40,7 @@
             background: linear-gradient(135deg, var(--raymond-red) 0%, var(--raymond-dark-red) 100%);
             padding: 15px 24px;
             box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
-            display: flex;
+  0           display: flex;
             align-items: center;
             justify-content: center;
             color: white;
@@ -140,7 +141,7 @@
         .action-buttons {
             display: flex;
             gap: 8px;
-            flex: 1.3;
+            flex: 2;
             min-width: 200px;
         }
 
@@ -157,6 +158,21 @@
             text-transform: uppercase;
             cursor: pointer;
             box-shadow: 0 2px 4px rgba(179, 0, 6, 0.15);
+        }
+
+        .btn-excel {
+            height: 36px;
+            padding: 0 14px;
+            background-color: #107c41;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            flex: 2;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(16, 124, 65, 0.15);
         }
 
         .btn-clear {
@@ -318,7 +334,7 @@
     
     <header>
         <div>
-            <div class="header-brand">Raymond Reports</div>
+            <div class="header-brand">Raymond Gatepass Reports</div>
             <div class="header-sub">Lifestyle Limited • Textile Division • Pandhurna</div>
         </div>
     </header>
@@ -330,7 +346,7 @@
                     <label>Search Employee ID</label>
                     <input type="text" id="empIdFilter" class="filter-control" placeholder="Enter ID...">
                 </div>
-                <div class="filter-group">
+               <div class="filter-group">
                     <label>Date Horizon</label>
                     <select id="dateRangeFilter" class="filter-control" onchange="handleHorizonChange()">
                         <option value="all">All Available History</option>
@@ -368,6 +384,7 @@
 
                 <div class="action-buttons">
                     <button class="btn-search" onclick="applyFilters()">Search Records</button>
+                    <button class="btn-excel" onclick="downloadAsExcel()">Download Excel</button>
                     <button class="btn-clear" onclick="resetAllFilters()">Reset</button>
                 </div>
             </div>
@@ -392,7 +409,7 @@
                             <th>User Name</th>
                             <th>Department</th>
                             <th>Duration</th>
-                            <th>Approver</th>
+                           <th>Approver</th>
                             <th>Remark / Purpose</th>
                             <th>Status</th>
                         </tr>
@@ -425,7 +442,7 @@
             { createdTime: pastDayIso, fields: { PassNo: "P-9004", UserID: "RAY104", UserName: "Sanjay Dutt", Department: "Finishing", Duration: "4 hrs", Approver: "R. Choudhary", Remark: "Machine Repair", Status: "Approved" } },
             { createdTime: pastDayIso, fields: { PassNo: "P-9005", UserID: "RAY105", UserName: "Anil Kapoor", Department: "Warehouse", Duration: "2 hrs", Approver: "S. Deshmukh", Remark: "Stock Audit", Status: "Pending" } },
             { createdTime: currentIso, fields: { PassNo: "P-9006", UserID: "RAY106", UserName: "Sunil Shetty", Department: "IT Support", Duration: "1 hr", Approver: "P. Dadhe", Remark: "Network Issue", Status: "Approved" } },
-            { createdTime: currentIso, fields: { PassNo: "P-9007", UserID: "RAY107", UserName: "Manoj Tiwari", Department: "Quality Assurance (QA)", Duration: "2 hrs", Approver: "K. Prasad", Remark: "Lab Check", Status: "Approved" } },
+           { createdTime: currentIso, fields: { PassNo: "P-9007", UserID: "RAY107", UserName: "Manoj Tiwari", Department: "Quality Assurance (QA)", Duration: "2 hrs", Approver: "K. Prasad", Remark: "Lab Check", Status: "Approved" } },
             { createdTime: pastDayIso, fields: { PassNo: "P-9008", UserID: "RAY108", UserName: "Deepak Rao", Department: "HR & Administration", Duration: "5 hrs", Approver: "S. K. Mishra", Remark: "Audit duty", Status: "Approved" } },
             { createdTime: currentIso, fields: { PassNo: "P-9009", UserID: "RAY109", UserName: "Harish Rawat", Department: "Folding", Duration: "3 hrs", Approver: "M. P. Patil", Remark: "Packing Check", Status: "Approved" } }
         ];
@@ -488,7 +505,7 @@
             const colorPalette = ['#B30006', '#E53E3E', '#DD6B20', '#ECC94B', '#319795', '#3182CE', '#007791', '#4A5568', '#718096', '#652438'];
             
             let structuredData = [];
-            let totalPassesCount = 0;
+           let totalPassesCount = 0;
             let colorMapIndex = 0;
 
             for (let i = 0; i < deptOptions.length; i++) {
@@ -523,7 +540,7 @@
             const baseCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             baseCircle.setAttribute("cx", "40");
             baseCircle.setAttribute("cy", "40");
-            baseCircle.setAttribute("r", "32");
+           baseCircle.setAttribute("r", "32");
             baseCircle.setAttribute("fill", "transparent");
             baseCircle.setAttribute("stroke", "#f1f5f9");
             baseCircle.setAttribute("stroke-width", "8");
@@ -693,6 +710,17 @@
             document.getElementById('toDate').value = "";
             document.getElementById('deptFilter').value = "all";
             applyFilters();
+        }
+
+        // Core compilation function to parse table dataset directly into binary stream files
+        function downloadAsExcel() {
+            const currentTable = document.getElementById('recordsTable');
+            if (!currentTable || currentTable.style.display === "none") {
+                alert("No live records are currently compiled to download. Please execute a record query.");
+                return;
+            }
+            const processedWorkbook = XLSX.utils.table_to_book(currentTable, { sheet: "Gatepass Log Summary" });
+            XLSX.writeFile(processedWorkbook, "Raymond_Gatepass_Report.xlsx");
         }
 
         window.addEventListener('DOMContentLoaded', fetchInitialData);
